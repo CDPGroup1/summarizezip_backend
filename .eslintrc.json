@@ -18,6 +18,7 @@
     // "no-var": "off",
     "no-console": "warn",
     "no-plusplus": "off",
+    "camelcase": "off",
     "no-shadow": "off",
     "vars-on-top": "off",
     "no-underscore-dangle": "off", // var _foo;
