@@ -1,4 +1,5 @@
 const express = require('express');
+const cors = require('cors');
 const bodyParser = require('body-parser');
 const axios = require('axios');
 
@@ -13,6 +14,7 @@ axios.defaults.headers.common = {
   'Content-Type': 'application/json',
 };
 
+app.use(cors());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
@@ -25,6 +27,11 @@ app.get('/', (req, res) => {
 
 app.post('/api/summarize', async (req, res) => {
   const { title, content, model = 'news', summaryCount = 3 } = req.body;
+
+  console.log(req);
+
+  console.log(req.body);
+  console.log(title, content);
 
   const postData = {
     document: {
