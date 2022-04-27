@@ -8,18 +8,12 @@ const port = 3000;
 
 require('dotenv').config();
 
-axios.defaults.headers.common = {
-  'X-NCP-APIGW-API-KEY-ID': `${process.env.KEY_ID}`,
-  'X-NCP-APIGW-API-KEY': `${process.env.KEY}`,
-  'Content-Type': 'application/json',
-};
-
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 const Clova_baseUrl = 'https://naveropenapi.apigw.ntruss.com/text-summary/v1/summarize';
-const Papago_baseUrl = 'https://naveropenapi.apigw.ntruss.com/nmt/v1/translation';
+const Papago_baseUrl = 'https://openapi.naver.com/v1/papago/n2mt';
 
 app.get('/', (req, res) => {
   res.send('hello');
@@ -27,11 +21,6 @@ app.get('/', (req, res) => {
 
 app.post('/api/summarize', async (req, res) => {
   const { title, content, model = 'news', summaryCount = 3 } = req.body;
-
-  console.log(req);
-
-  console.log(req.body);
-  console.log(title, content);
 
   const postData = {
     document: {
@@ -47,7 +36,13 @@ app.post('/api/summarize', async (req, res) => {
   };
 
   try {
-    const { data } = await axios.post(Clova_baseUrl, postData);
+    const { data } = await axios.post(Clova_baseUrl, postData, {
+      headers: {
+        'X-NCP-APIGW-API-KEY-ID': `${process.env.KEY_ID}`,
+        'X-NCP-APIGW-API-KEY': `${process.env.KEY}`,
+        'Content-Type': 'application/json',
+      },
+    });
     res.send(data);
   } catch (error) {
     throw new Error('에러가 발생했습니다', error);
@@ -63,7 +58,13 @@ app.post('/api/translate', async (req, res) => {
     text,
   };
   try {
-    const { data } = await axios.post(Papago_baseUrl, postData);
+    const { data } = await axios.post(Papago_baseUrl, postData, {
+      headers: {
+        'X-Naver-Client-Id': `${process.env.Client_ID}`,
+        'X-Naver-Client-Secret': `${process.env.Client_Secret}`,
+        'Content-Type': 'application/json',
+      },
+    });
     res.send(data.message.result);
   } catch (error) {
     throw new Error(error);
