@@ -2,6 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const axios = require('axios');
 const cors = require('cors');
+
 const app = express();
 const port = 3000;
 const Iconv = require('iconv').Iconv;
@@ -10,22 +11,19 @@ const { spawn } = require('child_process');
 app.use(cors());
 require('dotenv').config();
 
-axios.defaults.headers.common = {
-  'X-NCP-APIGW-API-KEY-ID': `${process.env.KEY_ID}`,
-  'X-NCP-APIGW-API-KEY': `${process.env.KEY}`,
-  'Content-Type': 'application/json',
-};
-
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 const Clova_baseUrl = 'https://naveropenapi.apigw.ntruss.com/text-summary/v1/summarize';
 const Papago_baseUrl = 'https://openapi.naver.com/v1/papago/n2mt';
 
+app.get('/', (req, res) => {
+  res.send('hello');
+});
+
 app.post('/python', (req, res) => {
   const href = req.body.url;
-
-  const pyProg = spawn('python', ['1.py', href]);
+  const pyProg = spawn('python', ['extract.py', href]);
 
   pyProg.stdout.on('data', function (data) {
     const buffer1 = Buffer.from(data);
@@ -37,10 +35,7 @@ app.post('/python', (req, res) => {
 });
 
 app.post('/api/summarize', async (req, res) => {
-  const title = '제목';
-  const content = req.body.content;
-  const model = 'news';
-  const summaryCount = 3;
+  const { title, content, model = 'news', summaryCount = 3 } = req.body;
   const postData = {
     document: {
       title,
@@ -55,8 +50,13 @@ app.post('/api/summarize', async (req, res) => {
   };
 
   try {
-    const { data } = await axios.post(Clova_baseUrl, postData);
-    console.log(data);
+    const { data } = await axios.post(Clova_baseUrl, postData, {
+      headers: {
+        'X-NCP-APIGW-API-KEY-ID': `${process.env.KEY_ID}`,
+        'X-NCP-APIGW-API-KEY': `${process.env.KEY}`,
+        'Content-Type': 'application/json',
+      },
+    });
     res.send(data);
   } catch (error) {
     throw new Error('에러가 발생했습니다', error);
@@ -64,8 +64,7 @@ app.post('/api/summarize', async (req, res) => {
 });
 
 app.post('/api/translate', async (req, res) => {
-  const text = req.body.content;
-
+  const { text } = req.body;
   const postData = {
     source: 'en',
     target: 'ko',
