@@ -5,7 +5,7 @@ const cors = require('cors');
 
 const app = express();
 const port = 3000;
-const Iconv = require('iconv').Iconv;
+const { Iconv } = require('iconv');
 const { spawn } = require('child_process');
 
 app.use(cors());
@@ -17,14 +17,24 @@ app.use(bodyParser.json());
 const Clova_baseUrl = 'https://naveropenapi.apigw.ntruss.com/text-summary/v1/summarize';
 const Papago_baseUrl = 'https://openapi.naver.com/v1/papago/n2mt';
 
-function filter(content) {
+const isSummarizePossible = content => {
   const reg = /[^a-zA-Z,. ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/g;
-  const filterContent = content.replace(reg, '');
-  if (filterContent.length < 2000 && filterContent.length > 200) {
-    return 1;
+  const pureContent = content.replace(reg, '');
+  if (pureContent.length < 2000 && pureContent.length > 200) {
+    return true;
+  } else {
+    return false;
   }
-  return 0;
-}
+};
+
+// function filter(content) {
+//   const reg = /[^a-zA-Z,. ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/g;
+//   const filterContent = content.replace(reg, '');
+//   if (filterContent.length < 2000 && filterContent.length > 200) {
+//     return 1;
+//   }
+//   return 0;
+// }
 app.get('/', (req, res) => {
   res.send('hello');
 });
@@ -33,21 +43,24 @@ app.post('/python', (req, res) => {
   const href = req.body.url;
   const pyProg = spawn('python', ['extract.py', href]);
 
-  pyProg.stdout.on('data', function (data) {
+  pyProg.stdout.on('data', data => {
     const buffer1 = Buffer.from(data);
     const iconv = new Iconv('euc-kr', 'UTF8');
     const pythonReturn = iconv.convert(buffer1).toString();
-    const ptyhonText = { answer: pythonReturn };
-    res.send(ptyhonText);
+    const pythonText = { answer: pythonReturn };
+    res.send(pythonText);
+  });
+  pyProg.stderr.on('data', data => {
+    console.log(data.toString());
   });
 });
 
 app.post('/api/summarize', async (req, res) => {
   const { title, content, model = 'news', summaryCount = 3 } = req.body;
-  if (filter(content)) {
+  if (isSummarizePossible(content)) {
     const postData = {
       document: {
-        title: 'title',
+        title,
         content,
       },
       option: {
@@ -94,7 +107,6 @@ app.post('/api/translate', async (req, res) => {
         'Content-Type': 'application/json',
       },
     });
-    console.log(data.message.result);
     res.send(data.message.result);
   } catch (error) {
     throw new Error(error);
