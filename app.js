@@ -5,6 +5,11 @@ const cors = require('cors');
 
 const app = express();
 const port = 3000;
+
+/**
+ * @description mac에서 실행될때는 단순히 data.toString()로 가능
+ * windows에서 실행시 buffer로 들어오는 데이터를 받기 위해 iconv 필요
+ */
 // const { Iconv } = require('iconv');
 const { spawn } = require('child_process');
 
@@ -17,24 +22,6 @@ app.use(bodyParser.json());
 const Clova_baseUrl = 'https://naveropenapi.apigw.ntruss.com/text-summary/v1/summarize';
 const Papago_baseUrl = 'https://openapi.naver.com/v1/papago/n2mt';
 
-const isSummarizePossible = content => {
-  const reg = /[^a-zA-Z,. ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/g;
-  const pureContent = content.replace(reg, '');
-  if (pureContent.length < 2000 && pureContent.length > 200) {
-    return true;
-  } else {
-    return false;
-  }
-};
-
-// function filter(content) {
-//   const reg = /[^a-zA-Z,. ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/g;
-//   const filterContent = content.replace(reg, '');
-//   if (filterContent.length < 2000 && filterContent.length > 200) {
-//     return 1;
-//   }
-//   return 0;
-// }
 app.get('/', (req, res) => {
   res.send('hello');
 });
@@ -43,50 +30,52 @@ app.post('/python', (req, res) => {
   const href = req.body.url;
   const pyProg = spawn('python3', ['extract.py', href]);
 
+  /**
+   * @description window에서 작동하는 코드
+   */
+  // const buffer1 = Buffer.from(data);
+  // const iconv = new Iconv('euc-kr', 'UTF8');
+  // const pythonReturn = iconv.convert(buffer1).toString();
+  // res.send(JSON.stringify(pythonReturn));
+
+  /**
+   * @description mac에서 작동하는 코드
+   */
   pyProg.stdout.on('data', data => {
-    console.log(data.toString());
     res.send(JSON.stringify(data.toString()));
   });
   pyProg.stderr.on('data', data => {
-    console.log(data.toString());
-    res.send(JSON.stringify('trafilatura 라이브러리에서 오류 발생'));
+    res.send(JSON.stringify('trafilatura 라이브러리에서 오류 발생', data.toString()));
   });
 });
 
 app.post('/api/summarize', async (req, res) => {
   const { title, content, model = 'news', summaryCount = 3 } = req.body;
-  console.log('hohoho');
-  if (isSummarizePossible(content)) {
-    console.log('hi');
-    const postData = {
-      document: {
-        title,
-        content,
-      },
-      option: {
-        language: 'ko',
-        model,
-        tone: 2,
-        summaryCount,
-      },
-    };
 
-    try {
-      const { data } = await axios.post(Clova_baseUrl, postData, {
-        headers: {
-          'X-NCP-APIGW-API-KEY-ID': `${process.env.KEY_ID}`,
-          'X-NCP-APIGW-API-KEY': `${process.env.KEY}`,
-          'Content-Type': 'application/json',
-        },
-      });
-      res.send(data);
-    } catch (error) {
-      throw new Error('에러가 발생했습니다', error);
-    }
-  } else {
-    console.log('ho');
-    const data = '0';
+  const postData = {
+    document: {
+      title,
+      content,
+    },
+    option: {
+      language: 'ko',
+      model,
+      tone: 2,
+      summaryCount,
+    },
+  };
+
+  try {
+    const { data } = await axios.post(Clova_baseUrl, postData, {
+      headers: {
+        'X-NCP-APIGW-API-KEY-ID': `${process.env.KEY_ID}`,
+        'X-NCP-APIGW-API-KEY': `${process.env.KEY}`,
+        'Content-Type': 'application/json',
+      },
+    });
     res.send(data);
+  } catch (error) {
+    throw new Error('에러가 발생했습니다', error);
   }
 });
 
