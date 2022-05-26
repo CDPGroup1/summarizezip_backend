@@ -5,7 +5,7 @@ const cors = require('cors');
 
 const app = express();
 const port = 3000;
-const { Iconv } = require('iconv');
+// const { Iconv } = require('iconv');
 const { spawn } = require('child_process');
 
 app.use(cors());
@@ -41,23 +41,23 @@ app.get('/', (req, res) => {
 
 app.post('/python', (req, res) => {
   const href = req.body.url;
-  const pyProg = spawn('python', ['extract.py', href]);
+  const pyProg = spawn('python3', ['extract.py', href]);
 
   pyProg.stdout.on('data', data => {
-    const buffer1 = Buffer.from(data);
-    const iconv = new Iconv('euc-kr', 'UTF8');
-    const pythonReturn = iconv.convert(buffer1).toString();
-    const pythonText = { answer: pythonReturn };
-    res.send(pythonText);
+    console.log(data.toString());
+    res.send(JSON.stringify(data.toString()));
   });
   pyProg.stderr.on('data', data => {
     console.log(data.toString());
+    res.send(JSON.stringify('trafilatura 라이브러리에서 오류 발생'));
   });
 });
 
 app.post('/api/summarize', async (req, res) => {
   const { title, content, model = 'news', summaryCount = 3 } = req.body;
+  console.log('hohoho');
   if (isSummarizePossible(content)) {
+    console.log('hi');
     const postData = {
       document: {
         title,
@@ -84,6 +84,7 @@ app.post('/api/summarize', async (req, res) => {
       throw new Error('에러가 발생했습니다', error);
     }
   } else {
+    console.log('ho');
     const data = '0';
     res.send(data);
   }

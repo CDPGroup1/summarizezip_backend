@@ -1,4 +1,5 @@
 import sys, trafilatura
+
 def getContent(url):
     downloaded = trafilatura.fetch_url(url)
     str1 = trafilatura.extract(downloaded)
