@@ -30,6 +30,8 @@ app.post('/python', (req, res) => {
   const href = req.body.url;
   const pyProg = spawn('python3', ['extract.py', href]);
 
+  let sendData = '';
+
   /**
    * @description window에서 작동하는 코드
    */
@@ -41,12 +43,17 @@ app.post('/python', (req, res) => {
   /**
    * @description mac에서 작동하는 코드
    */
+  // pyProg가 끝날때까지 돌려야함
+
   pyProg.stdout.on('data', data => {
-    res.send(JSON.stringify(data.toString()));
+    sendData += data.toString();
   });
-  pyProg.stderr.on('data', data => {
-    res.send(JSON.stringify('trafilatura 라이브러리에서 오류 발생', data.toString()));
+
+  pyProg.on('close', () => {
+    res.send(JSON.stringify(sendData));
   });
+
+  // pyProg.stderr.on('data', data => res.send(JSON.stringify('trafilatura 라이브러리에서 오류 발생', data.toString())));
 });
 
 app.post('/api/summarize', async (req, res) => {
