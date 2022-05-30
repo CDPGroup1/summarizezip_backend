@@ -32,19 +32,6 @@ app.post('/python', (req, res) => {
 
   let sendData = '';
 
-  /**
-   * @description window에서 작동하는 코드
-   */
-  // const buffer1 = Buffer.from(data);
-  // const iconv = new Iconv('euc-kr', 'UTF8');
-  // const pythonReturn = iconv.convert(buffer1).toString();
-  // res.send(JSON.stringify(pythonReturn));
-
-  /**
-   * @description mac에서 작동하는 코드
-   */
-  // pyProg가 끝날때까지 돌려야함
-
   pyProg.stdout.on('data', data => {
     sendData += data.toString();
   });
@@ -52,6 +39,14 @@ app.post('/python', (req, res) => {
   pyProg.on('close', () => {
     res.send(JSON.stringify(sendData));
   });
+
+  /**
+   * @description window에서 작동하는 코드
+   */
+  // const buffer1 = Buffer.from(data);
+  // const iconv = new Iconv('euc-kr', 'UTF8');
+  // const pythonReturn = iconv.convert(buffer1).toString();
+  // res.send(JSON.stringify(pythonReturn));
 
   // pyProg.stderr.on('data', data => res.send(JSON.stringify('trafilatura 라이브러리에서 오류 발생', data.toString())));
 });
