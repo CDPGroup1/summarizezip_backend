@@ -99,6 +99,7 @@ app.post('/api/translate', async (req, res) => {
         'Content-Type': 'application/json',
       },
     });
+    console.log(data.message.result);
     res.send(data.message.result);
   } catch (error) {
     throw new Error(error);
